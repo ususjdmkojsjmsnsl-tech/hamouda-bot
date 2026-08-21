@@ -463,4 +463,12 @@ def wallpapers_section(call):
     btn_back.style = "danger"
     markup.add(btn_back)
 
-    bo
+if __name__ == "__main__":
+    try:
+        bot.remove_webhook()
+        time.sleep(1)
+        print("🚀 بوت حمودا يعمل الآن وجاهز لاستقبال الرسائل...")
+        bot.infinity_polling(skip_pending=True)
+    except Exception as e:
+        print(f"❌ خطأ: {e}")
+        
