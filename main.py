@@ -20,16 +20,14 @@ logging.info("UserBot with custom features has started.")
 
 
 # ============================================================
-# === دالة التحقق من المشرفين في المجموعات ===
+# === دالة التحقق من المشرفين والصلاحيات ===
 # ============================================================
 async def is_user_admin(event):
-    # السماح بالتنفيذ فوراً في الرسائل المحفوظة أو الدردشات الخاصة للاختبار
     if not event.is_group:
         return True
     try:
         chat = await event.get_chat()
         sender_id = event.sender_id
-        # إذا كان الحساب هو مالك البوت أو المشرف
         if sender_id == (await client.get_me()).id:
             return True
         async for admin in client.iter_participants(chat, filter=events.ChannelParticipants.ADMINISTRATORS):
@@ -37,7 +35,7 @@ async def is_user_admin(event):
                 return True
         return False
     except Exception:
-        return True # لتسهيل التجربة في حال القيود
+        return True
 
 
 # ============================================================
@@ -68,7 +66,7 @@ async def set_profile_picture(event):
 # ============================================================
 @client.on(events.NewMessage(pattern=r'(?i)^بوت$'))
 async def reply_to_bot_word(event):
-    await event.reply("اسمي حمودا يا معلم 🌟")
+    await event.reply("اسمي حمودا يا كسمك 😂")
 
 
 # ============================================================
@@ -82,12 +80,12 @@ async def show_all_commands(event):
         "🛠️ <b>أوامر الحساب والملف الشخصي:</b>\n"
         "🔹 <code>setprofile</code> (بالرد على صورة) - لتغيير بروفايلك الشخصي وتحديثه.\n"
         "🔹 <code>الاوامر</code> - لعرض هذه القائمة.\n"
-        "🔹 <code>حمودا ايدي</code> - لمعرفة الأيدي الخاص بك أو الشخص المردود عليه.\n"
-        "🔹 <code>حمودا الوقت</code> - لمعرفة الوقت والتاريخ الحالي.\n\n"
-        "🛡️ <b>أوامر الإدارة والحماية (في الجروبات):</b>\n"
-        "🔹 <code>كتم</code> (بالرد) - لكتم عضو في المجموعة.\n"
-        "🔹 <code>فك كتم</code> (بالرد) - لفك الكتم عن عضو.\n"
-        "🔹 <code>حظر</code> (بالرد) - لحظر مستخدم نهائياً.\n"
+        "🔹 <code>ايدي</code> - لمعرفة الأيدي الخاص بك أو الشخص المردود عليه.\n"
+        "🔹 <code>الوقت</code> - لمعرفة الوقت والتاريخ الحالي.\n\n"
+        "🛡️ <b>أوامر الإدارة والحماية (تعمل بالجروبات والخاص):</b>\n"
+        "🔹 <code>كتم</code> (بالرد) - لكتم عضو.\n"
+        "🔹 <code>فك كتم</code> (بالرد) - لفك الكتم.\n"
+        "🔹 <code>حظر</code> (بالرد) - لحظر مستخدم.\n"
         "🔹 <code>طرد</code> (بالرد) - لطرد مستخدم.\n\n"
         "🎮 <b>الألعاب والترفيه:</b>\n"
         "🔹 <code>لعبة الحظ</code> أو <code>حجر ورق مقص</code>\n"
@@ -100,7 +98,7 @@ async def show_all_commands(event):
 # ============================================================
 # === 4. معلومات الحساب والوقت ===
 # ============================================================
-@client.on(events.NewMessage(pattern=r'(?i)^حمودا ايدي$'))
+@client.on(events.NewMessage(pattern=r'(?i)^ايدي$'))
 async def get_my_id(event):
     if event.is_reply:
         reply = await event.get_reply_message()
@@ -110,112 +108,93 @@ async def get_my_id(event):
         await event.reply(f"🆔 أيدي الخاص بك: <code>{user.id}</code>", parse_mode='html')
 
 
-@client.on(events.NewMessage(pattern=r'(?i)^حمودا الوقت$'))
+@client.on(events.NewMessage(pattern=r'(?i)^الوقت$'))
 async def get_current_time(event):
     now = datetime.now().strftime("%Y-%m-%d | %H:%M:%S")
     await event.reply(f"⏰ الوقت والتاريخ الحالي: <code>{now}</code>", parse_mode='html')
 
 
 # ============================================================
-# === 5. أوامر الإدارة الفعالة (كتم، فك كتم، حظر، طرد) ===
+# === 5. أوامر الإدارة (مفعلة للجروبات والخاص) ===
 # ============================================================
 @client.on(events.NewMessage(pattern=r'(?i)^كتم$'))
 async def mute_user(event):
-    if not event.is_group:
-        await event.reply("⚠️ هذا الأمر يعمل داخل المجموعات فقط.")
-        return
-    if await is_user_admin(event):
-        if event.is_reply:
-            reply = await event.get_reply_message()
-            if not reply.sender_id:
-                await event.reply("❌ لا يمكن تحديد المستخدم.")
-                return
-            try:
-                # منع المستخدم من إرسال الرسائل
-                rights = ChatBannedRights(send_messages=True)
-                await client.edit_permissions(event.chat_id, reply.sender_id, rights)
-                await event.reply("🔇 تم كتم المستخدم بنجاح.")
-            except Exception as e:
-                await event.reply(f"❌ خطأ: {e}")
-        else:
-            await event.reply("⚠️ يجب الرد على رسالة الشخص المراد كتمه.")
+    if event.is_reply:
+        reply = await event.get_reply_message()
+        if not reply.sender_id:
+            await event.reply("❌ لا يمكن تحديد المستخدم.")
+            return
+        try:
+            rights = ChatBannedRights(until_date=None, send_messages=True)
+            await client.edit_permissions(event.chat_id, reply.sender_id, rights)
+            await event.reply("🔇 تم كتم المستخدم بنجاح.")
+        except Exception as e:
+            await event.reply(f"❌ خطأ: {e}")
+    else:
+        await event.reply("⚠️ يجب الرد على رسالة الشخص المراد كتمه.")
 
 
 @client.on(events.NewMessage(pattern=r'(?i)^فك كتم$'))
 async def unmute_user(event):
-    if not event.is_group:
-        await event.reply("⚠️ هذا الأمر يعمل داخل المجموعات فقط.")
-        return
-    if await is_user_admin(event):
-        if event.is_reply:
-            reply = await event.get_reply_message()
-            if not reply.sender_id:
-                await event.reply("❌ لا يمكن تحديد المستخدم.")
-                return
-            try:
-                # إلغاء كافة القيود وإرجاع الصلاحيات للوضع الطبيعي
-                rights = ChatBannedRights(
-                    until_date=None,
-                    send_messages=False,
-                    send_media=False,
-                    send_stickers=False,
-                    send_gifs=False,
-                    send_games=False,
-                    send_inline=False,
-                    embed_links=False
-                )
-                await client.edit_permissions(event.chat_id, reply.sender_id, rights)
-                await event.reply("🔊 تم فك الكتم عن المستخدم.")
-            except Exception as e:
-                await event.reply(f"❌ خطأ: {e}")
-        else:
-            await event.reply("⚠️ يجب الرد على رسالة الشخص المراد فك كتمه.")
+    if event.is_reply:
+        reply = await event.get_reply_message()
+        if not reply.sender_id:
+            await event.reply("❌ لا يمكن تحديد المستخدم.")
+            return
+        try:
+            rights = ChatBannedRights(
+                until_date=None,
+                send_messages=False,
+                send_media=False,
+                send_stickers=False,
+                send_gifs=False,
+                send_games=False,
+                send_inline=False,
+                embed_links=False
+            )
+            await client.edit_permissions(event.chat_id, reply.sender_id, rights)
+            await event.reply("🔊 تم فك الكتم عن المستخدم.")
+        except Exception as e:
+            await event.reply(f"❌ خطأ: {e}")
+    else:
+        await event.reply("⚠️ يجب الرد على رسالة الشخص المراد فك كتمه.")
 
 
 @client.on(events.NewMessage(pattern=r'(?i)^حظر$'))
 async def ban_user(event):
-    if not event.is_group:
-        await event.reply("⚠️ هذا الأمر يعمل داخل المجموعات فقط.")
-        return
-    if await is_user_admin(event):
-        if event.is_reply:
-            reply = await event.get_reply_message()
-            if not reply.sender_id:
-                await event.reply("❌ لا يمكن تحديد المستخدم.")
-                return
-            try:
-                # حظر نهائي من المجموعة
-                rights = ChatBannedRights(view_messages=True)
-                await client.edit_permissions(event.chat_id, reply.sender_id, rights)
-                await event.reply("🚷 تم حظر المستخدم من المجموعة.")
-            except Exception as e:
-                await event.reply(f"❌ خطأ: {e}")
-        else:
-            await event.reply("⚠️ يجب الرد على رسالة الشخص المراد حظره.")
+    if event.is_reply:
+        reply = await event.get_reply_message()
+        if not reply.sender_id:
+            await event.reply("❌ لا يمكن تحديد المستخدم.")
+            return
+        try:
+            rights = ChatBannedRights(until_date=None, view_messages=True)
+            await client.edit_permissions(event.chat_id, reply.sender_id, rights)
+            await event.reply("🚷 تم حظر المستخدم.")
+        except Exception as e:
+            await event.reply(f"❌ خطأ: {e}")
+    else:
+        await event.reply("⚠️ يجب الرد على رسالة الشخص المراد حظره.")
 
 
 @client.on(events.NewMessage(pattern=r'(?i)^طرد$'))
 async def kick_user(event):
-    if not event.is_group:
-        await event.reply("⚠️ هذا الأمر يعمل داخل المجموعات فقط.")
-        return
-    if await is_user_admin(event):
-        if event.is_reply:
-            reply = await event.get_reply_message()
-            if not reply.sender_id:
-                await event.reply("❌ لا يمكن تحديد المستخدم.")
-                return
-            try:
-                await client.kick_participant(event.chat_id, reply.sender_id)
-                await event.reply("👢 تم طرد المستخدم.")
-            except Exception as e:
-                await event.reply(f"❌ خطأ: {e}")
-        else:
-            await event.reply("⚠️ يجب الرد على رسالة الشخص المراد طرده.")
+    if event.is_reply:
+        reply = await event.get_reply_message()
+        if not reply.sender_id:
+            await event.reply("❌ لا يمكن تحديد المستخدم.")
+            return
+        try:
+            await client.kick_participant(event.chat_id, reply.sender_id)
+            await event.reply("👢 تم طرد المستخدم.")
+        except Exception as e:
+            await event.reply(f"❌ خطأ: {e}")
+    else:
+        await event.reply("⚠️ يجب الرد على رسالة الشخص المراد طرده.")
 
 
 # ============================================================
-# === 6. الألعاب والترفيه (مفعلة بالكامل) ===
+# === 6. الألعاب والترفيه ===
 # ============================================================
 @client.on(events.NewMessage(pattern=r'(?i)^(حجر ورق مقص|لعبة الحظ)$'))
 async def rps_game(event):
@@ -262,4 +241,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-                
