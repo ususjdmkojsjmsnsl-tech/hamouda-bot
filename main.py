@@ -3,7 +3,6 @@ import random
 from datetime import datetime
 from telethon import TelegramClient, events
 from telethon.tl.functions.photos import UploadProfilePhotoRequest
-from telethon.tl.types import ReplyInlineMarkup, KeyboardButtonRow, KeyboardButtonCallback
 
 # ===== بيانات الـ API الخاصة بك =====
 API_ID = 38739119
@@ -47,7 +46,7 @@ async def set_profile_picture(event):
 
     reply_msg = await event.get_reply_message()
     if not reply_msg.photo:
-        await event.reply("⚠️ الرسالة التي ردرت عليها ليست صورة.")
+        await event.reply("⚠️ الرسالة التي رددت عليها ليست صورة.")
         return
 
     try:
@@ -83,13 +82,13 @@ async def show_all_commands(event):
         "🛠️ <b>أوامر الحساب والملف الشخصي:</b>\n"
         "🔹 <code>setprofile</code> (بالرد على صورة) - لتغيير بروفايلك الشخصي وتحديثه.\n"
         "🔹 <code>الاوامر</code> - لعرض هذه القائمة.\n"
-        "🔹 <code>حمودا ايدي</code> - لمعرفة الأيدي الخاص بك.\n"
-        "🔹 <code>حمودا الوقت</code> - لمعرفة الوقت والتاريخ.\n\n"
+        "🔹 <code>حمودا ايدي</code> - لمعرفة الأيدي الخاص بك أو الشخص المردود عليه.\n"
+        "🔹 <code>حمودا الوقت</code> - لمعرفة الوقت والتاريخ الحالي.\n\n"
         "🛡️ <b>أوامر الإدارة والحماية (في الجروبات):</b>\n"
-        "🔹 <code>حمودا كتم</code> (بالرد) - لكتم عضو في المجموعة.\n"
-        "🔹 <code>حمودا فك كتم</code> (بالرد) - لفك الكتم عن عضو.\n"
-        "🔹 <code>حمودا حظر</code> (بالرد) - لحظر مستخدم نهائياً.\n"
-        "🔹 <code>حمودا طرد</code> (بالرد) - لطرد مستخدم.\n\n"
+        "🔹 <code>كتم</code> (بالرد) - لكتم عضو في المجموعة.\n"
+        "🔹 <code>فك كتم</code> (بالرد) - لفك الكتم عن عضو.\n"
+        "🔹 <code>حظر</code> (بالرد) - لحظر مستخدم نهائياً.\n"
+        "🔹 <code>طرد</code> (بالرد) - لطرد مستخدم.\n\n"
         "🎮 <b>الألعاب والترفيه:</b>\n"
         "🔹 <code>لعبة الحظ</code> أو <code>حجر ورق مقص</code>\n"
         "🔹 <code>نسبة الحب [اسم الشخص]</code>\n"
@@ -99,9 +98,28 @@ async def show_all_commands(event):
 
 
 # ============================================================
-# === 4. أوامر الإدارة (كتم، فك كتم، حظر، طرد) ===
+# === 4. معلومات الحساب والوقت (مفعلة فعلياً) ===
 # ============================================================
-@client.on(events.NewMessage(pattern=r'حمودا كتم'))
+@client.on(events.NewMessage(pattern=r'(?i)^حمودا ايدي$'))
+async def get_my_id(event):
+    if event.is_reply:
+        reply = await event.get_reply_message()
+        await event.reply(f"👤 أيدي المستخدم: <code>{reply.sender_id}</code>", parse_mode='html')
+    else:
+        user = await client.get_me()
+        await event.reply(f"🆔 أيدي الخاص بك: <code>{user.id}</code>", parse_mode='html')
+
+
+@client.on(events.NewMessage(pattern=r'(?i)^حمودا الوقت$'))
+async def get_current_time(event):
+    now = datetime.now().strftime("%Y-%m-%d | %H:%M:%S")
+    await event.reply(f"⏰ الوقت والتاريخ الحالي: <code>{now}</code>", parse_mode='html')
+
+
+# ============================================================
+# === 5. أوامر الإدارة المباشرة (كتم، فك كتم، حظر، طرد) ===
+# ============================================================
+@client.on(events.NewMessage(pattern=r'(?i)^كتم$'))
 async def mute_user(event):
     if not event.is_group:
         return
@@ -109,14 +127,13 @@ async def mute_user(event):
         if event.is_reply:
             reply = await event.get_reply_message()
             try:
-                # تقييد المستخدم من إرسال الرسائل
                 await client.edit_permissions(event.chat_id, reply.sender_id, send_messages=False)
                 await event.reply("🔇 تم كتم المستخدم بنجاح.")
             except Exception as e:
                 await event.reply(f"❌ خطأ: {e}")
 
 
-@client.on(events.NewMessage(pattern=r'حمودا فك كتم'))
+@client.on(events.NewMessage(pattern=r'(?i)^فك كتم$'))
 async def unmute_user(event):
     if not event.is_group:
         return
@@ -130,7 +147,7 @@ async def unmute_user(event):
                 await event.reply(f"❌ خطأ: {e}")
 
 
-@client.on(events.NewMessage(pattern=r'حمودا حظر'))
+@client.on(events.NewMessage(pattern=r'(?i)^حظر$'))
 async def ban_user(event):
     if not event.is_group:
         return
@@ -144,7 +161,7 @@ async def ban_user(event):
                 await event.reply(f"❌ خطأ: {e}")
 
 
-@client.on(events.NewMessage(pattern=r'حمودا طرد'))
+@client.on(events.NewMessage(pattern=r'(?i)^طرد$'))
 async def kick_user(event):
     if not event.is_group:
         return
@@ -159,7 +176,7 @@ async def kick_user(event):
 
 
 # ============================================================
-# === 5. الألعاب والترفيه (حجر ورق مقص، نسبة الحب، نكت) ===
+# === 6. الألعاب والترفيه (مفعلة بالكامل) ===
 # ============================================================
 @client.on(events.NewMessage(pattern=r'(?i)^(حجر ورق مقص|لعبة الحظ)$'))
 async def rps_game(event):
@@ -185,15 +202,24 @@ async def send_joke(event):
     await event.reply(random.choice(jokes))
 
 
+@client.on(events.NewMessage(pattern=r'(?i)^حكمة$'))
+async def send_wisdom(event):
+    wisdoms = [
+        "من طال لسانه كثرت خطاياه، ومن كثر كلامه كثر سقطه. 📜",
+        "الوقت كالسيف إن لم تقطعه قطعك. ⏳",
+        "الصمت حكمة وقليل فاعله. 🌙"
+    ]
+    await event.reply(random.choice(wisdoms))
+
+
 # ============================================================
 # === التشغيل الأساسي للـ UserBot ===
 # ============================================================
 def main():
-    print("جاري تشغيل حسابك الشخصي عبر Telethon مع الأوامر الجديدة...")
+    print("جاري تشغيل حسابك الشخصي عبر Telethon وتفعيل جميع الأوامر...")
     client.start()
     print("تم تسجيل الدخول بنجاح والحساب الشخصي يعمل الآن!")
     client.run_until_disconnected()
 
 if __name__ == '__main__':
     main()
-        
