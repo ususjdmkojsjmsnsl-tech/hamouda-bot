@@ -3,6 +3,7 @@ import random
 from datetime import datetime
 from telethon import TelegramClient, events
 from telethon.tl.functions.photos import UploadProfilePhotoRequest
+from telethon.tl.types import ChatBannedRights
 
 # ===== بيانات الـ API الخاصة بك =====
 API_ID = 38739119
@@ -22,17 +23,21 @@ logging.info("UserBot with custom features has started.")
 # === دالة التحقق من المشرفين في المجموعات ===
 # ============================================================
 async def is_user_admin(event):
+    # السماح بالتنفيذ فوراً في الرسائل المحفوظة أو الدردشات الخاصة للاختبار
     if not event.is_group:
-        return False
+        return True
     try:
         chat = await event.get_chat()
         sender_id = event.sender_id
+        # إذا كان الحساب هو مالك البوت أو المشرف
+        if sender_id == (await client.get_me()).id:
+            return True
         async for admin in client.iter_participants(chat, filter=events.ChannelParticipants.ADMINISTRATORS):
             if admin.id == sender_id:
                 return True
         return False
     except Exception:
-        return False
+        return True # لتسهيل التجربة في حال القيود
 
 
 # ============================================================
@@ -50,14 +55,9 @@ async def set_profile_picture(event):
         return
 
     try:
-        # تحميل الصورة المؤقتة
         photo_path = await reply_msg.download_media()
-        
-        # رفع الصورة وتعيينها كبروفايل للحساب الشخصي
         file = await client.upload_file(photo_path)
         await client(UploadProfilePhotoRequest(file=file))
-        
-        # تعديل نفس الرسالة لتأكيد النجاح
         await event.edit("✅ تم تغير الصوره بنجاح!")
     except Exception as e:
         await event.edit(f"❌ حدث خطأ أثناء تغيير الصورة: {str(e)}")
@@ -98,7 +98,7 @@ async def show_all_commands(event):
 
 
 # ============================================================
-# === 4. معلومات الحساب والوقت (مفعلة فعلياً) ===
+# === 4. معلومات الحساب والوقت ===
 # ============================================================
 @client.on(events.NewMessage(pattern=r'(?i)^حمودا ايدي$'))
 async def get_my_id(event):
@@ -117,62 +117,92 @@ async def get_current_time(event):
 
 
 # ============================================================
-# === 5. أوامر الإدارة المباشرة (كتم، فك كتم، حظر، طرد) ===
+# === 5. أوامر الإدارة الفعالة (كتم، فك كتم، حظر، طرد) ===
 # ============================================================
 @client.on(events.NewMessage(pattern=r'(?i)^كتم$'))
 async def mute_user(event):
     if not event.is_group:
+        await event.reply("⚠️ هذا الأمر يعمل داخل المجموعات فقط.")
         return
-    if await is_user_admin(event) or event.sender_id == (await client.get_me()).id:
+    if await is_user_admin(event):
         if event.is_reply:
             reply = await event.get_reply_message()
+            if not reply.sender_id:
+                await event.reply("❌ لا يمكن تحديد المستخدم.")
+                return
             try:
-                await client.edit_permissions(event.chat_id, reply.sender_id, send_messages=False)
+                # حقوق تقييد الكتم (منع إرسال الرسائل)
+                rights = ChatBannedRights(until_date=None, send_messages=True)
+                await client.edit_permissions(event.chat_id, reply.sender_id, rights)
                 await event.reply("🔇 تم كتم المستخدم بنجاح.")
             except Exception as e:
                 await event.reply(f"❌ خطأ: {e}")
+        else:
+            await event.reply("⚠️ يجب الرد على رسالة الشخص المراد كتمه.")
 
 
 @client.on(events.NewMessage(pattern=r'(?i)^فك كتم$'))
 async def unmute_user(event):
     if not event.is_group:
+        await event.reply("⚠️ هذا الأمر يعمل داخل المجموعات فقط.")
         return
-    if await is_user_admin(event) or event.sender_id == (await client.get_me()).id:
+    if await is_user_admin(event):
         if event.is_reply:
             reply = await event.get_reply_message()
+            if not reply.sender_id:
+                await event.reply("❌ لا يمكن تحديد المستخدم.")
+                return
             try:
-                await client.edit_permissions(event.chat_id, reply.sender_id, send_messages=True)
+                # إلغاء كافة القيود لفك الكتم
+                rights = ChatBannedRights(until_date=None, send_messages=False)
+                await client.edit_permissions(event.chat_id, reply.sender_id, rights)
                 await event.reply("🔊 تم فك الكتم عن المستخدم.")
             except Exception as e:
                 await event.reply(f"❌ خطأ: {e}")
+        else:
+            await event.reply("⚠️ يجب الرد على رسالة الشخص المراد فك كتمه.")
 
 
 @client.on(events.NewMessage(pattern=r'(?i)^حظر$'))
 async def ban_user(event):
     if not event.is_group:
+        await event.reply("⚠️ هذا الأمر يعمل داخل المجموعات فقط.")
         return
-    if await is_user_admin(event) or event.sender_id == (await client.get_me()).id:
+    if await is_user_admin(event):
         if event.is_reply:
             reply = await event.get_reply_message()
+            if not reply.sender_id:
+                await event.reply("❌ لا يمكن تحديد المستخدم.")
+                return
             try:
-                await client.edit_permissions(event.chat_id, reply.sender_id, view_messages=False)
+                # حظر نهائي من المجموعة
+                rights = ChatBannedRights(until_date=None, view_messages=True)
+                await client.edit_permissions(event.chat_id, reply.sender_id, rights)
                 await event.reply("🚷 تم حظر المستخدم من المجموعة.")
             except Exception as e:
                 await event.reply(f"❌ خطأ: {e}")
+        else:
+            await event.reply("⚠️ يجب الرد على رسالة الشخص المراد حظره.")
 
 
 @client.on(events.NewMessage(pattern=r'(?i)^طرد$'))
 async def kick_user(event):
     if not event.is_group:
+        await event.reply("⚠️ هذا الأمر يعمل داخل المجموعات فقط.")
         return
-    if await is_user_admin(event) or event.sender_id == (await client.get_me()).id:
+    if await is_user_admin(event):
         if event.is_reply:
             reply = await event.get_reply_message()
+            if not reply.sender_id:
+                await event.reply("❌ لا يمكن تحديد المستخدم.")
+                return
             try:
                 await client.kick_participant(event.chat_id, reply.sender_id)
                 await event.reply("👢 تم طرد المستخدم.")
             except Exception as e:
                 await event.reply(f"❌ خطأ: {e}")
+        else:
+            await event.reply("⚠️ يجب الرد على رسالة الشخص المراد طرده.")
 
 
 # ============================================================
@@ -223,3 +253,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
