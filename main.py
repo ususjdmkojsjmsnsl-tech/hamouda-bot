@@ -131,8 +131,8 @@ async def mute_user(event):
                 await event.reply("❌ لا يمكن تحديد المستخدم.")
                 return
             try:
-                # حقوق تقييد الكتم (منع إرسال الرسائل)
-                rights = ChatBannedRights(until_date=None, send_messages=True)
+                # منع المستخدم من إرسال الرسائل
+                rights = ChatBannedRights(send_messages=True)
                 await client.edit_permissions(event.chat_id, reply.sender_id, rights)
                 await event.reply("🔇 تم كتم المستخدم بنجاح.")
             except Exception as e:
@@ -153,8 +153,17 @@ async def unmute_user(event):
                 await event.reply("❌ لا يمكن تحديد المستخدم.")
                 return
             try:
-                # إلغاء كافة القيود لفك الكتم
-                rights = ChatBannedRights(until_date=None, send_messages=False)
+                # إلغاء كافة القيود وإرجاع الصلاحيات للوضع الطبيعي
+                rights = ChatBannedRights(
+                    until_date=None,
+                    send_messages=False,
+                    send_media=False,
+                    send_stickers=False,
+                    send_gifs=False,
+                    send_games=False,
+                    send_inline=False,
+                    embed_links=False
+                )
                 await client.edit_permissions(event.chat_id, reply.sender_id, rights)
                 await event.reply("🔊 تم فك الكتم عن المستخدم.")
             except Exception as e:
@@ -176,7 +185,7 @@ async def ban_user(event):
                 return
             try:
                 # حظر نهائي من المجموعة
-                rights = ChatBannedRights(until_date=None, view_messages=True)
+                rights = ChatBannedRights(view_messages=True)
                 await client.edit_permissions(event.chat_id, reply.sender_id, rights)
                 await event.reply("🚷 تم حظر المستخدم من المجموعة.")
             except Exception as e:
@@ -253,4 +262,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
+                
