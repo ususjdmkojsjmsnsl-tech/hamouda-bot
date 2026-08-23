@@ -17,10 +17,31 @@ client = TelegramClient(
     timeout=60
 )
 
-print("جاري تشغيل سورس حمودا بجميع الأوامر كاملة..")
+print("جاري تشغيل سورس حمودا بدون أخطاء للكتم والحظر..")
 
-mute_rights = ChatBannedRights(until_date=None, send_messages=True)
-unmute_rights = ChatBannedRights(until_date=None, send_messages=False)
+# صلاحيات الكتم الصحيحة (منع إرسال الرسائل)
+mute_rights = ChatBannedRights(
+    until_date=None,
+    send_messages=True,
+    send_media=True,
+    send_stickers=True,
+    send_gifs=True,
+    send_games=True,
+    send_inline=True,
+    embed_links=True
+)
+
+# صلاحيات فك الكتم (السماح بكل شي)
+unmute_rights = ChatBannedRights(
+    until_date=None,
+    send_messages=False,
+    send_media=False,
+    send_stickers=False,
+    send_gifs=False,
+    send_games=False,
+    send_inline=False,
+    embed_links=False
+)
 
 # 1. قائمة المساعدة وعرض الأوامر
 @client.on(events.NewMessage(pattern=r"^(help|الأوامر)$"))
@@ -167,17 +188,10 @@ async def clone_cmd(event):
         return await event.edit("⚠️ يجب الرد على الشخص المراد استنساخ حسابه.")
     user = reply.sender
     try:
-        full_user = await client.get_entity(user.id)
         await client(UpdateProfileRequest(first_name=user.first_name))
         await event.edit(f"🎭 تم استنساخ الحساب بنجاح (`{user.first_name}`)!")
     except Exception as e:
         await event.edit(f"❌ حدث خطأ: {e}")
-
-# أوامر الأوضاع (on/off) الوهمية أو التبليغية
-@client.on(events.NewMessage(pattern=r"^(bold|italic|code|strike|underline|spoiler|emoji|emojib|emojig|1timename|2timename|3timename|1timebio|2timebio|3timebio)$"))
-async def modes_cmd(event):
-    cmd = event.raw_text
-    await event.edit(f"🔄 تم تفعيل وضع (`{cmd}`) بنجاح.")
 
 # أوامر الإدارة والحماية
 @client.on(events.NewMessage(pattern=r"^حظر$"))
@@ -188,7 +202,7 @@ async def ban_cmd(event):
     if not reply:
         return await event.edit("⚠️ رد على الشخص المراد حظره.")
     try:
-        await event.client.edit_permissions(event.chat_id, reply.sender_id, view_messages=False)
+        await event.client.edit_permissions(event.chat_id, reply.sender_id, view_messages=True)
         await event.edit("🔨 تم حظر المستخدم بنجاح!")
     except Exception as e:
         await event.edit(f"❌ خطأ: {e}")
@@ -231,20 +245,6 @@ async def delmute_cmd(event):
         await event.edit("🔊 تم فك الكتم بنجاح!")
     except Exception as e:
         await event.edit(f"❌ خطأ: {e}")
-
-@client.on(events.NewMessage(pattern=r"^(mute|unmute|block|unblock|delallmsguser|setenemy|delenemy|allf|setlove|deletlove|alllove)$"))
-async def extra_protection_cmd(event):
-    await event.edit(f"🛡️ تم تنفيذ أمر الحماية (`{event.raw_text}`) بنجاح.")
-
-# التحويل والوسائط
-@client.on(events.NewMessage(pattern=r"^(tlpho|tlskr|tlgif|voice|bashe|تحويل إلى الصورة|تحويل إلى ملصق)$"))
-async def media_conversion_cmd(event):
-    reply = await event.get_reply_message()
-    if not reply:
-        return await event.edit("⚠️ يرجى الرد على الوسائط المراد تحويلها.")
-    await event.edit("🔄 جاري معالجة وتحويل الوسائط...")
-    await asyncio.sleep(0.5)
-    await event.edit("✅ تم التحويل بنجاح.")
 
 # الألعاب والأنيميشن
 @client.on(events.NewMessage(pattern=r"^(love|حب)$"))
@@ -296,3 +296,4 @@ async def reload_cmd(event):
 
 client.start()
 client.run_until_disconnected()
+        
