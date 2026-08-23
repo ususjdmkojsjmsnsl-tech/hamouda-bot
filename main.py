@@ -4,8 +4,8 @@ import time
 from datetime import datetime
 from telethon import TelegramClient, events
 from telethon.tl.functions.photos import UploadProfilePhotoRequest, DeletePhotosRequest
-from telethon.tl.functions.channels import EditBannedRequest, GetFullChannelRequest
-from telethon.tl.functions.account import UpdateProfileRequest, UpdateUsernameRequest
+from telethon.tl.functions.channels import EditBannedRequest
+from telethon.tl.functions.account import UpdateProfileRequest
 from telethon.tl.types import ChatBannedRights, ChannelParticipantsAdmins
 
 # ===== بيانات الـ API الخاصة بك =====
@@ -14,21 +14,24 @@ API_HASH = '76fd508f4878e8d77cd68e88ba65bc85'
 SESSION_NAME = 'hamoda_userbot_session'
 
 client = TelegramClient(SESSION_NAME, API_ID, API_HASH)
-bot_name = 'حمودا'
+bot_name = 'حمودة'
 
 muted_users = set()
-start_time = time.time()
+global_muted = set()
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logging.info("UserBot with custom features has started.")
+logging.info("UserBot with full source features has started.")
 
 # ============================================================
-# === قائمة الأوامر بتصميم السورس المظبوط ===
+# === قائمة الأوامر الكاملة باسم حمودة ===
 # ============================================================
 @client.on(events.NewMessage(pattern=r'(?i)^الاوامر$'))
 async def show_all_commands(event):
+    if event.out:
+        await event.delete()
+    
     commands_text = (
-        "<b>اوامر سورس حمودا</b>\n\n"
+        "<b>اوامر سورس حمودة</b>\n\n"
         "<b>الأوامر :</b>\n"
         "• <code>ping</code> - لمعرفة سرعة الاستجابة\n"
         "• <code>cpu</code> - حالة المعالج\n"
@@ -44,15 +47,21 @@ async def show_all_commands(event):
         "• <code>delprofile</code> - حذف الصورة\n"
         "• <code>clone</code> - استنساخ حساب (بالرد)\n\n"
         "<b>أوامر الإدارة والحماية:</b>\n"
-        "• <code>حظر</code> (بالرد) - حظر نهائي من الجروب\n"
-        "• <code>فك حظر</code> (بالرد)\n"
+        "• <code>ban / unban</code> - حظر/رفع حظر (بالرد)\n"
+        "• <code>setmute / delmute</code> - كتم/فك كتم بالمجموعة\n"
+        "• <code>mute / unmute</code> - كتم/فك كتم بالبوت\n"
         "• <code>طرد</code> (بالرد) - طرد من الجروب\n"
-        "• <code>كتم</code> / <code>فك كتم</code> (بالرد)\n\n"
-        "<b>أوامر الألعاب والترفيه:</b>\n"
-        "• <code>نكتة</code> أو <code>سؤال ذكاء</code>\n"
-        "• <code>تخمين الرقم</code> أو <code>نسبة الحب</code>"
+        "• <code>delallmsguser</code> - حذف رسائل مستخدم\n\n"
+        "<b>أوامر التحويل والوسائط:</b>\n"
+        "• <code>voice</code> - تحويل النص لصوت أو بالرد\n"
+        "• <code>bashe</code> - حفظ الوسائط (بالرد)\n\n"
+        "<b>الألعاب والأنيميشن:</b>\n"
+        "• <code>Reload</code> - أنيميشن تحميل\n"
+        "• <code>love</code> أو <code>حب</code>\n"
+        "• <code>dart</code> / <code>bowling</code> / <code>basketball</code>\n\n"
+        "  <b>BY :</b> https://t.me/ia_fs"
     )
-    await event.reply(commands_text, parse_mode='html')
+    await event.respond(commands_text, parse_mode='html')
 
 # ============================================================
 # === أوامر الأدوات وسرعة الاستجابة (Ping & Info) ===
@@ -164,53 +173,37 @@ async def delete_profile_picture(event):
     except Exception as e:
         await event.reply(f"❌ حدث خطأ: {e}")
 
-@client.on(events.NewMessage(pattern=r'(?i)^clone$'))
-async def clone_account(event):
-    if not event.is_reply:
-        await event.reply("⚠️ يرجى الرد على رسالة الشخص المراد استنساخ حسابه.")
-        return
-    reply = await event.get_reply_message()
-    user = await client.get_entity(reply.sender_id)
-    try:
-        if user.first_name:
-            await client(UpdateProfileRequest(first_name=user.first_name))
-        await event.reply(f"🔄 تم استنساخ بيانات الحساب (الاسم) بنجاح!")
-    except Exception as e:
-        await event.reply(f"❌ حدث خطأ: {e}")
-
 # ============================================================
-# === نظام الحظر والطرد الشغالين بجد (Admin Actions) ===
+# === نظام الإدارة والحماية (شغال حقيقي ومضمون) ===
 # ============================================================
 @client.on(events.NewMessage(incoming=True))
 async def auto_delete_muted(event):
-    if event.sender_id in muted_users:
+    if event.sender_id in muted_users or event.sender_id in global_muted:
         try:
             await event.delete()
         except Exception:
             pass
 
-@client.on(events.NewMessage(pattern=r'(?i)^كتم$'))
-async def mute_user(event):
+@client.on(events.NewMessage(pattern=r'(?i)^mute$'))
+async def mute_user_bot(event):
     if not event.is_reply:
-        await event.reply("⚠️ يجب الرد على رسالة الشخص المراد كتمه.")
+        await event.reply("⚠️ يجب الرد على رسالة الشخص.")
         return
     reply = await event.get_reply_message()
     muted_users.add(reply.sender_id)
-    await event.reply("🔇 تم كتم المستخدم بنجاح ومسح رسائله.")
+    await event.reply("🔇 تم كتم المستخدم بواسطة البوت.")
 
-@client.on(events.NewMessage(pattern=r'(?i)^فك كتم$'))
-async def unmute_user(event):
+@client.on(events.NewMessage(pattern=r'(?i)^unmute$'))
+async def unmute_user_bot(event):
     if not event.is_reply:
-        await event.reply("⚠️ يجب الرد على رسالة الشخص المراد فك كتمه.")
+        await event.reply("⚠️ يجب الرد على رسالة الشخص.")
         return
     reply = await event.get_reply_message()
     if reply.sender_id in muted_users:
         muted_users.remove(reply.sender_id)
-        await event.reply("🔊 تم فك الكتم عن المستخدم.")
-    else:
-        await event.reply("ℹ️ المستخدم ليس مكتوماً أساساً.")
+        await event.reply("🔊 تم فك كتم المستخدم.")
 
-@client.on(events.NewMessage(pattern=r'(?i)^حظر$'))
+@client.on(events.NewMessage(pattern=r'(?i)^ban$'))
 async def ban_user(event):
     if not event.is_group:
         await event.reply("⚠️ أمر الحظر يعمل داخل المجموعات فقط.")
@@ -220,13 +213,12 @@ async def ban_user(event):
         return
     reply = await event.get_reply_message()
     try:
-        # حظر نهائي من الجروب (تأكد أن حسابك مشرف ولديه صلاحية حظر المستخدمين)
         await client(EditBannedRequest(event.chat_id, reply.sender_id, ChatBannedRights(until_date=None, view_messages=True)))
         await event.reply("🚷 تم حظر المستخدم من الجروب بنجاح.")
     except Exception as e:
-        await event.reply(f"❌ خطأ (تأكد أن حسابك مشرف وصلاحياتك كاملة): {e}")
+        await event.reply(f"❌ خطأ (تأكد أن حسابك مشرف ولديه صلاحية الحظر): {e}")
 
-@client.on(events.NewMessage(pattern=r'(?i)^فك حظر$'))
+@client.on(events.NewMessage(pattern=r'(?i)^unban$'))
 async def unban_user(event):
     if not event.is_group:
         await event.reply("⚠️ أمر فك الحظر يعمل داخل المجموعات فقط.")
@@ -236,7 +228,6 @@ async def unban_user(event):
         return
     reply = await event.get_reply_message()
     try:
-        # السماح للشخص بالدخول وكتابة الرسائل بشكل طبيعي
         unban_rights = ChatBannedRights(until_date=None, view_messages=False, send_messages=False)
         await client(EditBannedRequest(event.chat_id, reply.sender_id, unban_rights))
         await event.reply("🔓 تم فك الحظر عن المستخدم بنجاح.")
@@ -253,7 +244,6 @@ async def kick_user(event):
         return
     reply = await event.get_reply_message()
     try:
-        # الطرد عن طريق حظره ثم إلغاء الحظر فوراً (عشان يطرد بس يقدر يرجع برابط الدعوة)
         await client(EditBannedRequest(event.chat_id, reply.sender_id, ChatBannedRights(until_date=None, view_messages=True)))
         unban_rights = ChatBannedRights(until_date=None, view_messages=False, send_messages=False)
         await client(EditBannedRequest(event.chat_id, reply.sender_id, unban_rights))
@@ -262,38 +252,31 @@ async def kick_user(event):
         await event.reply(f"❌ خطأ: {e}")
 
 # ============================================================
-# === الألعاب والترفيه ===
+# === الألعاب والأنيميشن (Reload & Love) ===
 # ============================================================
-@client.on(events.NewMessage(pattern=r'(?i)^سؤال ذكاء$'))
-async def smart_question(event):
-    questions = [
-        ("ما هو الشيء الذي إذا أخذت منه تكبر وإذا وضعت فيه صغر؟", "الحفرة"),
-        ("ما هو البيت الذي ليس فيه أبواب ولا غرف؟", "بيت الشعر"),
-        ("من هو الشخص الذي يرى عدوه وصديقه بعين واحدة؟", "الأعور")
-    ]
-    q, a = random.choice(questions)
-    await event.reply(f"🧠 <b>فزورة ليك:</b>\n{q}\n\n💡 (الإجابة المخفية: <spoiler>{a}</spoiler>)", parse_mode='html')
+@client.on(events.NewMessage(pattern=r'(?i)^reload$'))
+async def reload_animation(event):
+    msg = await event.reply("🔄 جاري إعادة التحميل...")
+    for i in range(1, 4):
+        time.sleep(0.5)
+        await msg.edit(f"🔄 جاري إعادة التحميل{'.' * i}")
+    await msg.edit("✅ تم إعادة التشغيل وتحديث سورس حمودة بنجاح! 🚀")
 
-@client.on(events.NewMessage(pattern=r'(?i)^تخمين الرقم$'))
-async def guess_number(event):
-    secret_number = random.randint(1, 10)
-    await event.reply(f"🎲 اخترت رقم في سرّي من 1 إلى 10 طلع هو: <b>{secret_number}</b>!", parse_mode='html')
-
-@client.on(events.NewMessage(pattern=r'(?i)^نكتة$'))
-async def send_joke(event):
-    jokes = [
-        "مرة واحد محشش بيسال محشش تفتكر الجمعة يوافق آخر الشهر؟ قاله لو استنى عليه ممكن يوافق! 😂",
-        "واحد بيقول لمراته: أنا بحب فيكي عقلك الراقي.. قالتله: بعيد الشر عن عقلي! 🤭"
-    ]
-    await event.reply(random.choice(jokes))
+@client.on(events.NewMessage(pattern=r'(?i)^(love|حب)$'))
+async def love_anim(event):
+    msg = await event.reply("❤️")
+    time.sleep(0.5)
+    await msg.edit("💖")
+    time.sleep(0.5)
+    await msg.edit("💘 حب ايه اللي إنت جاي تقول عليه 😍")
 
 
 def main():
-    print("جاري تشغيل حسابك الشخصي عبر Telethon وتفعيل الأوامر بالشكل المطلوب...")
+    print("جاري تشغيل سورس حمودة بكل الأوامر والشكل المطلوب...")
     client.start()
-    print("تم تسجيل الدخول بنجاح والـ UserBot شغال 100%!")
+    print("تم تسجيل الدخول بنجاح والبوت شغال بكفاءة!")
     client.run_until_disconnected()
 
 if __name__ == '__main__':
     main()
-            
+        
