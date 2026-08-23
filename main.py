@@ -3,7 +3,8 @@ import random
 from datetime import datetime
 from telethon import TelegramClient, events
 from telethon.tl.functions.photos import UploadProfilePhotoRequest
-from telethon.tl.functions.contacts import BlockRequest, UnblockRequest
+from telethon.tl.functions.channels import EditBannedRequest
+from telethon.tl.types import ChatBannedRights
 
 # ===== بيانات الـ API الخاصة بك =====
 API_ID = 38739119
@@ -58,10 +59,13 @@ async def show_all_commands(event):
         "🔹 <code>فك كتم</code> (بالرد)\n"
         "🔹 <code>حظر</code> (بالرد)\n"
         "🔹 <code>طرد</code> (بالرد)\n\n"
-        "🎮 <b>الألعاب والترفيه:</b>\n"
-        "🔹 <code>لعبة الحظ</code> أو <code>حجر ورق مقص</code>\n"
+        "🎮 <b>الألعاب والترفيه الجديدة:</b>\n"
+        "🔹 <code>حجر ورق مقص</code> أو <code>لعبة الحظ</code>\n"
         "🔹 <code>نسبة الحب [اسم الشخص]</code>\n"
-        "🔹 <code>نكتة</code> أو <code>حكمة</code>"
+        "🔹 <code>تخمين الرقم</code> (لعبة تخمين من 1 لـ 10)\n"
+        "🔹 <code>سؤال ذكاء</code> (فوازير)\n"
+        "🔹 <code>نكتة</code> أو <code>نكت</code>\n"
+        "🔹 <code>حكمة</code>"
     )
     await event.reply(commands_text, parse_mode='html')
 
@@ -91,7 +95,7 @@ async def auto_delete_muted(event):
             pass
 
 # ============================================================
-# === أوامر الإدارة بدون مشاكل الصلاحيات المعقدة ===
+# === أوامر الإدارة ===
 # ============================================================
 @client.on(events.NewMessage(pattern=r'(?i)^كتم$'))
 async def mute_user(event):
@@ -128,6 +132,9 @@ async def unmute_user(event):
 
 @client.on(events.NewMessage(pattern=r'(?i)^حظر$'))
 async def ban_user(event):
+    if not event.is_group:
+        await event.reply("⚠️ أمر الحظر يعمل داخل المجموعات فقط.")
+        return
     if not event.is_reply:
         await event.reply("⚠️ يجب الرد على رسالة الشخص المراد حظره.")
         return
@@ -138,10 +145,10 @@ async def ban_user(event):
         return
 
     try:
-        await client(BlockRequest(reply.sender_id))
-        await event.reply("🚷 تم حظر المستخدم بنجاح.")
+        await client(EditBannedRequest(event.chat_id, reply.sender_id, ChatBannedRights(until_date=None, view_messages=True)))
+        await event.reply("🚷 تم حظر المستخدم من الجروب بنجاح.")
     except Exception as e:
-        await event.reply(f"❌ خطأ: {e}")
+        await event.reply(f"❌ خطأ (تأكد أن حسابك مشرف ولديه صلاحية الحظر): {e}")
 
 
 @client.on(events.NewMessage(pattern=r'(?i)^طرد$'))
@@ -149,22 +156,25 @@ async def kick_user(event):
     if not event.is_group:
         await event.reply("⚠️ أمر الطرد يعمل داخل المجموعات فقط.")
         return
-    if event.is_reply:
-        reply = await event.get_reply_message()
-        if not reply.sender_id:
-            await event.reply("❌ لا يمكن تحديد المستخدم.")
-            return
-        try:
-            await client.kick_participant(event.chat_id, reply.sender_id)
-            await event.reply("👢 تم طرد المستخدم.")
-        except Exception as e:
-            await event.reply(f"❌ خطأ: {e}")
-    else:
+    if not event.is_reply:
         await event.reply("⚠️ يجب الرد على رسالة الشخص المراد طرده.")
+        return
+    
+    reply = await event.get_reply_message()
+    if not reply.sender_id:
+        await event.reply("❌ لا يمكن تحديد المستخدم.")
+        return
+        
+    try:
+        await client(EditBannedRequest(event.chat_id, reply.sender_id, ChatBannedRights(until_date=None, view_messages=True)))
+        await client(EditBannedRequest(event.chat_id, reply.sender_id, ChatBannedRights(until_date=None, view_messages=False)))
+        await event.reply("👢 تم طرد المستخدم بنجاح.")
+    except Exception as e:
+        await event.reply(f"❌ خطأ (تأكد أن حسابك مشرف): {e}")
 
 
 # ============================================================
-# === الألعاب والترفيه ===
+# === الألعاب والترفيه (محدثة وكثيرة) ===
 # ============================================================
 @client.on(events.NewMessage(pattern=r'(?i)^(حجر ورق مقص|لعبة الحظ)$'))
 async def rps_game(event):
@@ -180,12 +190,36 @@ async def love_calculator(event):
     await event.reply(f"❤️ نسبة الحب بينك وبين <b>{target}</b> هي: <b>{percentage}%</b> 😍", parse_mode='html')
 
 
+@client.on(events.NewMessage(pattern=r'(?i)^تخمين الرقم$'))
+async def guess_number(event):
+    secret_number = random.randint(1, 10)
+    user_guess = random.randint(1, 10) # كمحاكاة سريعة أو لعبة حظ تفاعلية
+    await event.reply(f"🎲 اخترت رقم في سرّي من 1 إلى 10 طلع هو: <b>{secret_number}</b>!\nلو حظك حلو هتكسب المرة الجاية 😉", parse_mode='html')
+
+
+@client.on(events.NewMessage(pattern=r'(?i)^سؤال ذكاء$'))
+async def smart_question(event):
+    questions = [
+        ("ما هي الشيء الذي أذا أخذت منه تكبر وإذا وضعت فيه صغر؟", "الحفرة"),
+        ("ما هو البيت الذي ليس فيه أبواب ولا غرف؟", "بيت الشعر"),
+        ("من هو الشخص الذي يرى عدوه وصديقه بعين واحدة؟", "الأعور"),
+        ("ما هو الشيء الذي يسير أمامك ولا تراه؟", "المستقبل"),
+        ("ما هو الشئ الذي كلما كبر صغر؟", "العمر")
+    ]
+    q, a = random.choice(questions)
+    await event.reply(f"🧠 <b>فزورة ليك:</b>\n{q}\n\n💡 (الإجابة المخفية: <spoiler>{a}</spoiler>)", parse_mode='html')
+
+
 @client.on(events.NewMessage(pattern=r'(?i)^(نكتة|نكت)$'))
 async def send_joke(event):
     jokes = [
         "مرة واحد محشش بيسال محشش تفتكر الجمعة يوافق آخر الشهر؟ قاله لو استنى عليه ممكن يوافق! 😂",
         "واحد بيقول لمراته: أنا بحب فيكي عقلك الراقي.. قالتله: بعيد الشر عن عقلي! 🤭",
-        "واحد كريم جوز بنتة لواحد كريم، تقابلوا الصبح، حمّاه بيقوله: صباح الخير يا صهري العزيز، إيه رأيك في العروسة؟ قاله: والله العروسة على عيني وراسي، بس الباب اللي قفلته ورايا وأنا جاي هو اللي مصعبها عليّا! 🤣"
+        "واحد كريم جوز بنتة لواحد كريم، تقابلوا الصبح، حمّاه بيقوله: صباح الخير يا صهري العزيز، إيه رأيك في العروسة؟ قاله: والله العروسة على عيني وراسي، بس الباب اللي قفلته ورايا وأنا جاي هو اللي مصعبها عليّا! 🤣",
+        "واحد صعيدي راح يعمل اختبار قيادة، الظابط سأله: لو ظهر قدامك شخص وحمار تدوس مين الأول؟ الصعيدي قاله: الحمار طبعا! الظابط قاله: غلط، تدوس الفرامل! الصعيدي قاله: أصل العبقرية إن الحمار هو اللي بيظهر مفاجأة! 😆",
+        "اتنين محششين ماشيين في الشارع واحد بيقول للتاني: هو احنا ليه مش ماشيين على الرصيف التاني؟ قاله: عشان الناحية دي أطول! 🚶‍♂️",
+        "واحد بخيل ابنه جه قاله: يا بابا أنا نجحت وعايز هدية! أبوه قاله: شايف الشارع العريض اللي هناك ده؟ قاله: أه يا بابا، قاله: نجح السنة الجاية هخلیک تعبره! 💸",
+        "مرة واحد غبي دخل سينما لقى الفيلم بيبتدي من آخرة، طلع قال للناس برا: الحقوا, البطل بيعيش في الآخر! 🎬"
     ]
     await event.reply(random.choice(jokes))
 
@@ -195,7 +229,9 @@ async def send_wisdom(event):
     wisdoms = [
         "من طال لسانه كثرت خطاياه، ومن كثر كلامه كثر سقطه. 📜",
         "الوقت كالسيف إن لم تقطعه قطعك. ⏳",
-        "الصمت حكمة وقليل فاعله. 🌙"
+        "الصمت حكمة وقليل فاعله. 🌙",
+        "من ترقب الناس مات هماً، ولم تخلُ من حاسدٍ لم يعش. 🌟",
+        "توقع الخير تجده، وتفائل بالخير تدركه. 🎯"
     ]
     await event.reply(random.choice(wisdoms))
 
@@ -208,4 +244,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-        
