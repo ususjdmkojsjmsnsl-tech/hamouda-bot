@@ -9,7 +9,7 @@ from telethon.tl.functions.photos import UploadProfilePhotoRequest, DeletePhotos
 API_ID = 38739119
 API_HASH = "76fd508f4878e8d77cd68e88ba65bc85"
 
-# تشغيل حساب حمودا مع إعدادات اتصال مستقرة لمنع قطع السيرفر
+# تشغيل حساب حمودا مع إعدادات اتصال مستقرة
 client = TelegramClient(
     "hamouda_session", 
     API_ID, 
@@ -18,14 +18,14 @@ client = TelegramClient(
     timeout=60
 )
 
-print("جاري تشغيل سورس حمودا.. يرجى الانتظار.")
+print("جاري تشغيل سورس حمودا الكامل.. يرجى الانتظار.")
 
 @client.on(events.NewMessage(pattern=r"^\.(help|الأوامر)$"))
 async def help_cmd(event):
     help_text = """
-🤖 **قائمة أوامر سورس حمودا:**
+🤖 **قائمة أوامر سورس حمودا الكاملة:**
 
-⚙️ **أوامر السورس الأساسية:**
+⚙️ **الأوامر الأساسية:**
 • `.ping` - لمعرفة سرعة الاستجابة
 • `.cpu` - حالة المعالج
 • `.time` أو `.الساعة` - لعرض الوقت
@@ -37,10 +37,19 @@ async def help_cmd(event):
 👤 **أوامر الحساب الشخصي:**
 • `.setname <الاسم>` - تغيير الاسم
 • `.setbio <البايو>` - تغيير البايو
-• `.setprofile` - تغيير الصورة (بالرد على صورة)
-• `.delprofile` - حذف الصورة الشخصية
+• `.setprofile` - تغيير الصورة (بالرد)
+• `.delprofile` - حذف الصورة
 
-🎮 **صنع بواسطة: حمودا**
+🎮 **الألعاب والأنيميشن:**
+• `.reload` - أنيميشن تحميل
+• `.love` أو `.حب` - أنيميشن حب
+• `.tas` + رقم (1-6) - رمي النرد
+• `.dart` - السهام
+• `.bowling` - البولينج
+• `.basketball` - كرة السلة
+• `.football` - كرة القدم
+
+🤖 **صنع بواسطة: حمودا**
     """
     await event.edit(help_text)
 
@@ -118,6 +127,40 @@ async def delprofile_cmd(event):
     else:
         await event.edit("⚠️ ليس لديك صور شخصية لحذفها.")
 
+# أوامر الألعاب والأنيميشن المتاحة
+@client.on(events.NewMessage(pattern=r"^\.(love|حب)$"))
+async def love_anim(event):
+    await event.edit("❤️")
+    await asyncio.sleep(0.5)
+    await event.edit("💖")
+    await asyncio.sleep(0.5)
+    await event.edit("💘 جاري إرسال الحب...")
+
+@client.on(events.NewMessage(pattern=r"^\.tas$"))
+async def dice_cmd(event):
+    await event.delete()
+    await client.send_message(event.chat_id, file='🎲')
+
+@client.on(events.NewMessage(pattern=r"^\.dart$"))
+async def dart_cmd(event):
+    await event.delete()
+    await client.send_message(event.chat_id, file='🎯')
+
+@client.on(events.NewMessage(pattern=r"^\.bowling$"))
+async def bowling_cmd(event):
+    await event.delete()
+    await client.send_message(event.chat_id, file='🎳')
+
+@client.on(events.NewMessage(pattern=r"^\.basketball$"))
+async def basket_cmd(event):
+    await event.delete()
+    await client.send_message(event.chat_id, file='🏀')
+
+@client.on(events.NewMessage(pattern=r"^\.football$"))
+async def foot_cmd(event):
+    await event.delete()
+    await client.send_message(event.chat_id, file='⚽')
+
 @client.on(events.NewMessage(pattern=r"^\.reload$"))
 async def reload_cmd(event):
     msg = await event.edit("🔄 **جاري إعادة تحميل سورس حمودا... [▒▒▒▒▒▒▒▒▒▒] 0%**")
@@ -126,7 +169,7 @@ async def reload_cmd(event):
         bars = "█" * i + "▒" * (10 - i)
         percent = i * 10
         await msg.edit(f"🔄 **جاري إعادة تحميل سورس حمودا... [{bars}] {percent}%**")
-    await msg.edit("✅ **تم تحميل سورس حمودا بنجاح وجاهز للعمل!** 🚀")
+    await msg.edit("✅ **تم تحميل سورس حمودا الكامل بنجاح وجاهز للعمل!** 🚀")
 
 client.start()
 client.run_until_disconnected()
