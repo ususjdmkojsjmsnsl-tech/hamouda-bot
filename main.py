@@ -4,6 +4,7 @@ from datetime import datetime
 from telethon import TelegramClient, events
 from telethon.tl.functions.account import UpdateProfileRequest
 from telethon.tl.functions.photos import UploadProfilePhotoRequest, DeletePhotosRequest
+from telethon.tl.functions.channels import EditBannedRequest
 from telethon.tl.types import ChatBannedRights
 
 API_ID = 38739119
@@ -17,9 +18,9 @@ client = TelegramClient(
     timeout=60
 )
 
-print("جاري تشغيل سورس حمودا الشامل بجميع الأوامر..")
+print("جاري تشغيل سورس حمودا الشامل والنهائي المضمون..")
 
-# صلاحيات الكتم الصحيحة 100%
+# صلاحيات الكتم التامة
 mute_rights = ChatBannedRights(
     until_date=None,
     send_messages=True,
@@ -31,7 +32,7 @@ mute_rights = ChatBannedRights(
     embed_links=True
 )
 
-# صلاحيات فك الكتم الصحيحة 100%
+# صلاحيات فك الكتم التامة
 unmute_rights = ChatBannedRights(
     until_date=None,
     send_messages=False,
@@ -199,7 +200,7 @@ async def modes_cmd(event):
     cmd = event.raw_text
     await event.edit(f"🔄 تم تفعيل وضع (`{cmd}`) بنجاح.")
 
-# أوامر الإدارة والحماية (شغالة ومضبوطة تماماً)
+# أوامر الإدارة والحماية بالطريقة المباشرة والثابتة (EditBannedRequest)
 @client.on(events.NewMessage(pattern=r"^حظر$"))
 async def ban_cmd(event):
     if not event.is_group:
@@ -209,7 +210,7 @@ async def ban_cmd(event):
         return await event.edit("⚠️ رد على الشخص المراد حظره.")
     try:
         banned_rights = ChatBannedRights(until_date=None, view_messages=True)
-        await client.edit_permissions(event.chat_id, reply.sender_id, banned_rights=banned_rights)
+        await client(EditBannedRequest(event.chat_id, reply.sender_id, banned_rights))
         await event.edit("🔨 تم حظر المستخدم بنجاح!")
     except Exception as e:
         await event.edit(f"❌ خطأ: {e}")
@@ -223,7 +224,7 @@ async def unban_cmd(event):
         return await event.edit("⚠️ رد على الشخص المراد رفع الحظر عنه.")
     try:
         unban_rights = ChatBannedRights(until_date=None, view_messages=False)
-        await client.edit_permissions(event.chat_id, reply.sender_id, banned_rights=unban_rights)
+        await client(EditBannedRequest(event.chat_id, reply.sender_id, unban_rights))
         await event.edit("🔓 تم رفع الحظر بنجاح!")
     except Exception as e:
         await event.edit(f"❌ خطأ: {e}")
@@ -236,7 +237,7 @@ async def setmute_cmd(event):
     if not reply:
         return await event.edit("⚠️ رد على الشخص المراد كتمه.")
     try:
-        await client.edit_permissions(event.chat_id, reply.sender_id, banned_rights=mute_rights)
+        await client(EditBannedRequest(event.chat_id, reply.sender_id, mute_rights))
         await event.edit("🔇 تم كتم المستخدم بنجاح!")
     except Exception as e:
         await event.edit(f"❌ خطأ: {e}")
@@ -249,7 +250,7 @@ async def delmute_cmd(event):
     if not reply:
         return await event.edit("⚠️ رد على الشخص المراد فك كتمه.")
     try:
-        await client.edit_permissions(event.chat_id, reply.sender_id, banned_rights=unmute_rights)
+        await client(EditBannedRequest(event.chat_id, reply.sender_id, unmute_rights))
         await event.edit("🔊 تم فك الكتم بنجاح!")
     except Exception as e:
         await event.edit(f"❌ خطأ: {e}")
@@ -318,4 +319,3 @@ async def reload_cmd(event):
 
 client.start()
 client.run_until_disconnected()
-    
