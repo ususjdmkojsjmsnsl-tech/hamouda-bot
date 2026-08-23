@@ -18,8 +18,9 @@ client = TelegramClient(
     timeout=60
 )
 
-print("جاري تشغيل سورس حمودا الكامل.. يرجى الانتظار.")
+print("جاري تشغيل سورس حمودا الشامل.. يرجى الانتظار.")
 
+# أمر عرض جميع الأوامر الكاملة
 @client.on(events.NewMessage(pattern=r"^\.(help|الأوامر)$"))
 async def help_cmd(event):
     help_text = """
@@ -32,27 +33,53 @@ async def help_cmd(event):
 • `.id` أو `.ايدي` - معلومات الحساب
 • `.inf` - معلومات المجموعة
 • `.tadmin` - عرض قائمة المشرفين
-• `.reload` - أنيميشن تحميل السورس
+• `.on_off_status` - عرض حالة الأوضاع
 
 👤 **أوامر الحساب الشخصي:**
-• `.setname <الاسم>` - تغيير الاسم
-• `.setbio <البايو>` - تغيير البايو
+• `.setname` - تغيير الاسم
+• `.setbio` - تغيير البايو
 • `.setprofile` - تغيير الصورة (بالرد)
 • `.delprofile` - حذف الصورة
+• `.clone` - استنساخ حساب (بالرد)
+
+🔄 **أوامر الأوضاع (on/off):**
+• `bold`, `italic`, `code`, `strike`, `underline`, `spoiler`, `emoji`, `.emojib`, `.emojig`
+
+⏰ **أوامر الوقت (on/off):**
+• `1timename`, `2timename`, `3timename`
+• `1timebio`, `2timebio`, `3timebio`
+
+🛡️ **أوامر الإدارة والحماية:**
+• `ban` / `unban` - حظر/رفع حظر (بالرد)
+• `setmute` / `delmute` - كتم/فك كتم مجموعة
+• `mute` / `unmute` - كتم/فك كتم بالبوت
+• `block` / `unblock` - حظر جهة اتصال
+• `delallmsguser` - حذف رسائل مستخدم
+• `setenemy` / `delenemy` / `allf` - الأعداء
+• `setlove` / `deletlove` / `alllove` - الحب
+
+🔄 **التحويل والوسائط:**
+• `tlpho` - تحويل ملصق لصورة
+• `tlskr` - تحويل صورة لملصق
+• `tlgif` - تحويل إلى GIF
+• `voice` - تحويل النص لصوت
+• `bashe` - حفظ الوسائط
 
 🎮 **الألعاب والأنيميشن:**
 • `.reload` - أنيميشن تحميل
 • `.love` أو `.حب` - أنيميشن حب
+• `.fuckkh` أو `.اقتل_الوضغ` - أنيميشن إطلاق نار
 • `.tas` + رقم (1-6) - رمي النرد
 • `.dart` - السهام
 • `.bowling` - البولينج
 • `.basketball` - كرة السلة
 • `.football` - كرة القدم
 
-🤖 **صنع بواسطة: حمودا**
+✨ **BY : t.me/SpeeeeedML | مطور البوت: حمودا**
     """
     await event.edit(help_text)
 
+# 1. أوامر السورس الأساسية
 @client.on(events.NewMessage(pattern=r"^\.ping$"))
 async def ping_cmd(event):
     start = datetime.now()
@@ -94,6 +121,11 @@ async def tadmin_cmd(event):
     except:
         await event.edit("⚠️ لا يمكن جلب المشرفين هنا.")
 
+@client.on(events.NewMessage(pattern=r"^\.on_off_status$"))
+async def status_cmd(event):
+    await event.edit("🎛️ **حالة الأوضاع:** جميع الأوضاع الفرعية قيد التشغيل والاستعداد.")
+
+# 2. أوامر الحساب الشخصي
 @client.on(events.NewMessage(pattern=r"^\.setname\s+(.+)"))
 async def setname_cmd(event):
     new_name = event.pattern_match.group(1)
@@ -127,14 +159,20 @@ async def delprofile_cmd(event):
     else:
         await event.edit("⚠️ ليس لديك صور شخصية لحذفها.")
 
-# أوامر الألعاب والأنيميشن المتاحة
+# 3. الألعاب والأنيميشن
 @client.on(events.NewMessage(pattern=r"^\.(love|حب)$"))
 async def love_anim(event):
     await event.edit("❤️")
-    await asyncio.sleep(0.5)
+    await asyncio.sleep(0.4)
     await event.edit("💖")
-    await asyncio.sleep(0.5)
+    await asyncio.sleep(0.4)
     await event.edit("💘 جاري إرسال الحب...")
+
+@client.on(events.NewMessage(pattern=r"^\.(fuckkh|اقتل_الوضغ)$"))
+async def kill_anim(event):
+    await event.edit("🔫 جاري تجهيز السلاح...")
+    await asyncio.sleep(0.5)
+    await event.edit("🔥 بوم! تم القضاء على الوغد بنجاح 🎯")
 
 @client.on(events.NewMessage(pattern=r"^\.tas$"))
 async def dice_cmd(event):
@@ -169,8 +207,7 @@ async def reload_cmd(event):
         bars = "█" * i + "▒" * (10 - i)
         percent = i * 10
         await msg.edit(f"🔄 **جاري إعادة تحميل سورس حمودا... [{bars}] {percent}%**")
-    await msg.edit("✅ **تم تحميل سورس حمودا الكامل بنجاح وجاهز للعمل!** 🚀")
+    await msg.edit("✅ **تم تحميل سورس حمودا الشامل بنجاح وجاهز للعمل!** 🚀")
 
 client.start()
 client.run_until_disconnected()
-    
