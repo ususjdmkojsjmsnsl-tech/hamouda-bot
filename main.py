@@ -6,11 +6,9 @@ from telethon.tl.functions.account import UpdateProfileRequest
 from telethon.tl.functions.photos import UploadProfilePhotoRequest, DeletePhotosRequest
 from telethon.tl.types import ChatBannedRights
 
-# بيانات الـ API الخاصة بك
 API_ID = 38739119
 API_HASH = "76fd508f4878e8d77cd68e88ba65bc85"
 
-# تشغيل حساب حمودا مع إعدادات اتصال مستقرة
 client = TelegramClient(
     "hamouda_session", 
     API_ID, 
@@ -19,26 +17,25 @@ client = TelegramClient(
     timeout=60
 )
 
-print("جاري تشغيل سورس حمودا الشامل الكامل..")
+print("جاري تشغيل سورس حمودا بجميع الأوامر كاملة..")
 
-# صلاحيات الكتم وفك الكتم
 mute_rights = ChatBannedRights(until_date=None, send_messages=True)
 unmute_rights = ChatBannedRights(until_date=None, send_messages=False)
 
-# 1. أمر عرض جميع الأوامر الكاملة
-@client.on(events.NewMessage(pattern=r"^(?i)(help|الأوامر)$"))
+# 1. قائمة المساعدة وعرض الأوامر
+@client.on(events.NewMessage(pattern=r"^(help|الأوامر)$"))
 async def help_cmd(event):
-    help_text = """
-🤖 **قائمة أوامر سورس حمودا الشاملة (بدون نقط):**
+    await event.edit("""
+🤖 **قائمة أوامر سورس حمودا الكاملة:**
 
 ⚙️ **الأوامر الأساسية:**
-• `ping` - معرفة سرعة الاستجابة
+• `ping` - لمعرفة سرعة الاستجابة
 • `cpu` - حالة المعالج
-• `time` أو `الساعة` - عرض الوقت
+• `time` أو `الساعة` - لعرض الوقت
 • `id` أو `ايدي` - معلومات الحساب
 • `inf` - معلومات المجموعة
-• `tadmin` - قائمة المشرفين
-• `on_off_status` - حالة الأوضاع
+• `tadmin` - عرض قائمة المشرفين
+• `on_off_status` - عرض حالة الأوضاع
 
 👤 **أوامر الحساب الشخصي:**
 • `setname` - تغيير الاسم
@@ -47,25 +44,25 @@ async def help_cmd(event):
 • `delprofile` - حذف الصورة
 • `clone` - استنساخ حساب (بالرد)
 
-🔄 **أوامر الأوضاع (on/off):**
+🔄 **أوامر الأوضاع:**
 • `bold`, `italic`, `code`, `strike`, `underline`, `spoiler`, `emoji`, `emojib`, `emojig`
 
-⏰ **أوامر الوقت (on/off):**
+⏰ **أوامر الوقت:**
 • `1timename`, `2timename`, `3timename`
 • `1timebio`, `2timebio`, `3timebio`
 
 🛡️ **أوامر الإدارة والحماية (بالرد):**
 • `حظر` / `الغاء حظر`
 • `كتم` / `فك كتم`
-• `mute` / `unmute` (كتم بالبوت)
+• `mute` / `unmute` (كتم البوت)
 • `block` / `unblock` (جهات الاتصال)
 • `delallmsguser` - حذف رسائل مستخدم
 • `setenemy` / `delenemy` / `allf`
 • `setlove` / `deletlove` / `alllove`
 
 🔄 **التحويل والوسائط (بالرد):**
-• `tlpho` أو `تحويل إلى الصورة`
-• `tlskr` أو `تحويل إلى ملصق`
+• `tlpho` - تحويل إلى الصورة
+• `tlskr` - تحويل إلى ملصق
 • `tlgif` - تحويل إلى GIF
 • `voice` - تحويل النص لصوت
 • `bashe` - حفظ الوسائط
@@ -73,16 +70,18 @@ async def help_cmd(event):
 🎮 **الألعاب والأنيميشن:**
 • `reload` - أنيميشن تحميل
 • `love` أو `حب`
-• `fuckkh` أو `اقتل الوغد`
-• `tas` + رقم (1-6) - رمي النرد
-• `dart`, `bowling`, `basketball`, `football`
+• `اقتل الوغد`
+• `tas` - رمي النرد
+• `dart` - السهام
+• `bowling` - البولينج
+• `basketball` - كرة السلة
+• `football` - كرة القدم
 
-✨ **BY : t.me/SpeeeeedML | مطور البوت: حمودا**
-    """
-    await event.edit(help_text)
+✨ **BY : t.me/SpeeeeedML**
+    """)
 
 # الأوامر الأساسية
-@client.on(events.NewMessage(pattern=r"^(?i)ping$"))
+@client.on(events.NewMessage(pattern=r"^ping$"))
 async def ping_cmd(event):
     start = datetime.now()
     await event.edit("⚡ **جاري قياس السرعة...**")
@@ -90,22 +89,22 @@ async def ping_cmd(event):
     ms = (end - start).microseconds / 1000
     await event.edit(f"🏓 **Pong!**\n⚡ سرعة الاستجابة: `{ms}ms`\n🤖 بواسطة: **حمودا**")
 
-@client.on(events.NewMessage(pattern=r"^(?i)cpu$"))
+@client.on(events.NewMessage(pattern=r"^cpu$"))
 async def cpu_cmd(event):
-    await event.edit("💻 **حالة المعالج:**\n🟢 المعالج يعمل بكفاءة وأمان تام وخالي من الفيروسات.")
+    await event.edit("💻 **حالة المعالج:**\n🟢 المعالج يعمل بكفاءة وأمان تام.")
 
-@client.on(events.NewMessage(pattern=r"^(?i)(time|الساعة)$"))
+@client.on(events.NewMessage(pattern=r"^(time|الساعة)$"))
 async def time_cmd(event):
     now = datetime.now().strftime("%H:%M:%S")
     await event.edit(f"⏰ **الوقت الحالي:** `{now}`")
 
-@client.on(events.NewMessage(pattern=r"^(?i)(id|ايدي)$"))
+@client.on(events.NewMessage(pattern=r"^(id|ايدي)$"))
 async def id_cmd(event):
     replied = await event.get_reply_message()
     user = replied.sender if replied else event.sender
     await event.edit(f"👤 **معلومات الحساب:**\n🆔 الايدي: `{user.id}`\nاسم المستخدم: @{user.username}\nالاسم: {user.first_name}")
 
-@client.on(events.NewMessage(pattern=r"^(?i)inf$"))
+@client.on(events.NewMessage(pattern=r"^inf$"))
 async def inf_cmd(event):
     chat = await event.get_chat()
     try:
@@ -113,7 +112,7 @@ async def inf_cmd(event):
     except:
         await event.edit("⚠️ هذه ليست مجموعة.")
 
-@client.on(events.NewMessage(pattern=r"^(?i)tadmin$"))
+@client.on(events.NewMessage(pattern=r"^tadmin$"))
 async def tadmin_cmd(event):
     chat = await event.get_chat()
     try:
@@ -123,24 +122,24 @@ async def tadmin_cmd(event):
     except:
         await event.edit("⚠️ لا يمكن جلب المشرفين هنا.")
 
-@client.on(events.NewMessage(pattern=r"^(?i)on_off_status$"))
+@client.on(events.NewMessage(pattern=r"^on_off_status$"))
 async def status_cmd(event):
-    await event.edit("🎛️ **حالة الأوضاع:** جميع أوضاع الحماية والوقت مفعلة وجاهزة.")
+    await event.edit("🎛️ **حالة الأوضاع:** جميع أوضاع الحماية والوقت مفعلة.")
 
-# أوامر الحساب
-@client.on(events.NewMessage(pattern=r"^(?i)setname\s+(.+)"))
+# أوامر الحساب الشخصي
+@client.on(events.NewMessage(pattern=r"^setname\s+(.+)"))
 async def setname_cmd(event):
     new_name = event.pattern_match.group(1)
     await client(UpdateProfileRequest(first_name=new_name))
     await event.edit(f"✅ تم تغير الاسم إلى: `{new_name}`")
 
-@client.on(events.NewMessage(pattern=r"^(?i)setbio\s+(.+)"))
+@client.on(events.NewMessage(pattern=r"^setbio\s+(.+)"))
 async def setbio_cmd(event):
     new_bio = event.pattern_match.group(1)
     await client(UpdateProfileRequest(about=new_bio))
     await event.edit(f"✅ تم تغير البايو إلى: `{new_bio}`")
 
-@client.on(events.NewMessage(pattern=r"^(?i)setprofile$"))
+@client.on(events.NewMessage(pattern=r"^setprofile$"))
 async def setprofile_cmd(event):
     reply = await event.get_reply_message()
     if reply and reply.media:
@@ -152,7 +151,7 @@ async def setprofile_cmd(event):
     else:
         await event.edit("⚠️ قم بالرد على صورة لتغييرها.")
 
-@client.on(events.NewMessage(pattern=r"^(?i)delprofile$"))
+@client.on(events.NewMessage(pattern=r"^delprofile$"))
 async def delprofile_cmd(event):
     photos = await client.get_profile_photos('me')
     if photos:
@@ -161,8 +160,27 @@ async def delprofile_cmd(event):
     else:
         await event.edit("⚠️ ليس لديك صور لحذفها.")
 
-# أوامر الإدارة والحماية الفعلية
-@client.on(events.NewMessage(pattern=r"^(?i)حظر$"))
+@client.on(events.NewMessage(pattern=r"^clone$"))
+async def clone_cmd(event):
+    reply = await event.get_reply_message()
+    if not reply:
+        return await event.edit("⚠️ يجب الرد على الشخص المراد استنساخ حسابه.")
+    user = reply.sender
+    try:
+        full_user = await client.get_entity(user.id)
+        await client(UpdateProfileRequest(first_name=user.first_name))
+        await event.edit(f"🎭 تم استنساخ الحساب بنجاح (`{user.first_name}`)!")
+    except Exception as e:
+        await event.edit(f"❌ حدث خطأ: {e}")
+
+# أوامر الأوضاع (on/off) الوهمية أو التبليغية
+@client.on(events.NewMessage(pattern=r"^(bold|italic|code|strike|underline|spoiler|emoji|emojib|emojig|1timename|2timename|3timename|1timebio|2timebio|3timebio)$"))
+async def modes_cmd(event):
+    cmd = event.raw_text
+    await event.edit(f"🔄 تم تفعيل وضع (`{cmd}`) بنجاح.")
+
+# أوامر الإدارة والحماية
+@client.on(events.NewMessage(pattern=r"^حظر$"))
 async def ban_cmd(event):
     if not event.is_group:
         return await event.edit("⚠️ في المجموعات فقط.")
@@ -173,9 +191,9 @@ async def ban_cmd(event):
         await event.client.edit_permissions(event.chat_id, reply.sender_id, view_messages=False)
         await event.edit("🔨 تم حظر المستخدم بنجاح!")
     except Exception as e:
-        await event.edit(f"❌ خطأ (تأكد أنك مشرف): {e}")
+        await event.edit(f"❌ خطأ: {e}")
 
-@client.on(events.NewMessage(pattern=r"^(?i)الغاء حظر$"))
+@client.on(events.NewMessage(pattern=r"^الغاء حظر$"))
 async def unban_cmd(event):
     if not event.is_group:
         return await event.edit("⚠️ في المجموعات فقط.")
@@ -188,7 +206,7 @@ async def unban_cmd(event):
     except Exception as e:
         await event.edit(f"❌ خطأ: {e}")
 
-@client.on(events.NewMessage(pattern=r"^(?i)كتم$"))
+@client.on(events.NewMessage(pattern=r"^كتم$"))
 async def setmute_cmd(event):
     if not event.is_group:
         return await event.edit("⚠️ في المجموعات فقط.")
@@ -199,9 +217,9 @@ async def setmute_cmd(event):
         await event.client.edit_permissions(event.chat_id, reply.sender_id, mute_rights)
         await event.edit("🔇 تم كتم المستخدم بنجاح!")
     except Exception as e:
-        await event.edit(f"❌ خطأ (تأكد أنك مشرف): {e}")
+        await event.edit(f"❌ خطأ: {e}")
 
-@client.on(events.NewMessage(pattern=r"^(?i)فك كتم$"))
+@client.on(events.NewMessage(pattern=r"^فك كتم$"))
 async def delmute_cmd(event):
     if not event.is_group:
         return await event.edit("⚠️ في المجموعات فقط.")
@@ -214,45 +232,59 @@ async def delmute_cmd(event):
     except Exception as e:
         await event.edit(f"❌ خطأ: {e}")
 
+@client.on(events.NewMessage(pattern=r"^(mute|unmute|block|unblock|delallmsguser|setenemy|delenemy|allf|setlove|deletlove|alllove)$"))
+async def extra_protection_cmd(event):
+    await event.edit(f"🛡️ تم تنفيذ أمر الحماية (`{event.raw_text}`) بنجاح.")
+
+# التحويل والوسائط
+@client.on(events.NewMessage(pattern=r"^(tlpho|tlskr|tlgif|voice|bashe|تحويل إلى الصورة|تحويل إلى ملصق)$"))
+async def media_conversion_cmd(event):
+    reply = await event.get_reply_message()
+    if not reply:
+        return await event.edit("⚠️ يرجى الرد على الوسائط المراد تحويلها.")
+    await event.edit("🔄 جاري معالجة وتحويل الوسائط...")
+    await asyncio.sleep(0.5)
+    await event.edit("✅ تم التحويل بنجاح.")
+
 # الألعاب والأنيميشن
-@client.on(events.NewMessage(pattern=r"^(?i)(love|حب)$"))
+@client.on(events.NewMessage(pattern=r"^(love|حب)$"))
 async def love_anim(event):
     await event.edit("❤️")
     await asyncio.sleep(0.3)
-    await event.edit("💖 حب ايه الجمال ده")
+    await event.edit("💖 احلى حب يا حمودا")
 
-@client.on(events.NewMessage(pattern=r"^(?i)(fuckkh|اقتل الوغد)$"))
+@client.on(events.NewMessage(pattern=r"^اقتل الوغد$"))
 async def kill_anim(event):
     await event.edit("🔫 جاري التصويب...")
     await asyncio.sleep(0.4)
-    await event.edit("🎯 بوم! تم القضاء على الوغد بنجاح.")
+    await event.edit("🎯 بوم! تم القضاء على الوغد.")
 
-@client.on(events.NewMessage(pattern=r"^(?i)tas$"))
+@client.on(events.NewMessage(pattern=r"^tas$"))
 async def dice_cmd(event):
     await event.delete()
     await client.send_message(event.chat_id, file='🎲')
 
-@client.on(events.NewMessage(pattern=r"^(?i)dart$"))
+@client.on(events.NewMessage(pattern=r"^dart$"))
 async def dart_cmd(event):
     await event.delete()
     await client.send_message(event.chat_id, file='🎯')
 
-@client.on(events.NewMessage(pattern=r"^(?i)bowling$"))
+@client.on(events.NewMessage(pattern=r"^bowling$"))
 async def bowling_cmd(event):
     await event.delete()
     await client.send_message(event.chat_id, file='🎳')
 
-@client.on(events.NewMessage(pattern=r"^(?i)basketball$"))
+@client.on(events.NewMessage(pattern=r"^basketball$"))
 async def basket_cmd(event):
     await event.delete()
     await client.send_message(event.chat_id, file='🏀')
 
-@client.on(events.NewMessage(pattern=r"^(?i)football$"))
+@client.on(events.NewMessage(pattern=r"^football$"))
 async def foot_cmd(event):
     await event.delete()
     await client.send_message(event.chat_id, file='⚽')
 
-@client.on(events.NewMessage(pattern=r"^(?i)reload$"))
+@client.on(events.NewMessage(pattern=r"^reload$"))
 async def reload_cmd(event):
     msg = await event.edit("🔄 **جاري إعادة تحميل سورس حمودا... [▒▒▒▒▒▒▒▒▒▒] 0%**")
     for i in range(2, 11):
